@@ -141,7 +141,7 @@ export const botConfig = {
     },
     footer: {
       // Default footer text used in bot embeds.
-      text: "Titan Bot",
+      text: "Lake Bot",
       // Footer icon URL (null = no icon).
       icon: null,
     },
@@ -149,9 +149,9 @@ export const botConfig = {
     thumbnail: null,
     author: {
       // Optional default embed author block.
-      name: null,
-      icon: null,
-      url: null,
+      name: 
+      icon:
+      url:
     },
   },
 
