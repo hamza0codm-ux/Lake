@@ -149,9 +149,9 @@ export const botConfig = {
     thumbnail: null,
     author: {
       // Optional default embed author block.
-      name: 
-      icon:
-      url:
+      name: null,
+      icon: null, 
+      url: null,
     },
   },
 
