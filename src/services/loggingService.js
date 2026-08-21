@@ -11,7 +11,26 @@ import {
   splitComparisonFields,
 } from '../utils/logging/logEmbeds.js';
 
+// Legacy destinations (kept for backward compatibility)
 const LOG_DESTINATIONS = ['audit', 'applications', 'reports'];
+
+// All available log categories
+const LOG_CATEGORIES = {
+  security: { label: 'Security Logs', eventTypes: ['moderation.ban', 'moderation.kick', 'moderation.mute', 'moderation.warn', 'moderation.timeout'] },
+  reactions: { label: 'Reaction Logs', eventTypes: ['reactionrole.add', 'reactionrole.remove'] },
+  'member-join': { label: 'Member Join', eventTypes: ['member.join'] },
+  'member-leave': { label: 'Member Leave', eventTypes: ['member.leave'] },
+  boosts: { label: 'Boost Logs', eventTypes: ['giveaway.create', 'giveaway.winner'] },
+  nicknames: { label: 'Nickname Logs', eventTypes: ['member.namechange'] },
+  messages: { label: 'Message Logs', eventTypes: ['message.delete', 'message.edit', 'message.bulkdelete'] },
+  roles: { label: 'Role Logs', eventTypes: ['role.create', 'role.delete', 'role.update'] },
+  channels: { label: 'Channel Logs', eventTypes: ['moderation.lock', 'moderation.unlock'] },
+  voice: { label: 'Voice Logs', eventTypes: [] }, // For future use
+  invites: { label: 'Invite Logs', eventTypes: [] }, // For future use
+  timeouts: { label: 'Timeout Logs', eventTypes: ['moderation.timeout', 'moderation.untimeout'] },
+  kicks: { label: 'Kick Logs', eventTypes: ['moderation.kick'] },
+  bans: { label: 'Ban Logs', eventTypes: ['moderation.ban', 'moderation.unban'] },
+};
 
 const EVENT_TYPES = {
   MODERATION_BAN: 'moderation.ban',
@@ -147,6 +166,20 @@ const CATEGORY_DESTINATION = {
   report: 'reports',
 };
 
+/**
+ * Get the category for a given event type
+ * @param {string} eventType - The event type (e.g., 'moderation.ban')
+ * @returns {string|null} The category or null if not found
+ */
+function getCategoryForEventType(eventType) {
+  for (const [category, config] of Object.entries(LOG_CATEGORIES)) {
+    if (config.eventTypes.includes(eventType)) {
+      return category;
+    }
+  }
+  return null;
+}
+
 export function resolveLogChannel(config, destination) {
   const channels = config?.logging?.channels || {};
   if (destination && channels[destination]) {
@@ -190,8 +223,17 @@ function getLogChannelForEvent(config, eventType, overrideChannelId = null) {
     return overrideChannelId;
   }
 
-  const category = eventType?.split('.')[0];
-  const destination = CATEGORY_DESTINATION[category] || 'audit';
+  const channels = config?.logging?.channels || {};
+
+  // First, try to find a per-category channel
+  const category = getCategoryForEventType(eventType);
+  if (category && channels[category]) {
+    return channels[category];
+  }
+
+  // Fallback to legacy destinations (application/report)
+  const legacyCategory = eventType?.split('.')[0];
+  const destination = CATEGORY_DESTINATION[legacyCategory] || 'audit';
   return resolveLogChannel(config, destination);
 }
 
@@ -355,11 +397,12 @@ export async function getLoggingStatus(client, guildId) {
 
   return {
     enabled: logging.enabled || false,
-    channels: logging.channels || { audit: null, applications: null, reports: null },
+    channels: logging.channels || {},
     channelId: logging.channels?.audit ?? null,
     ignore: getIgnoreList(config),
     enabledEvents: logging.enabledEvents || {},
     allEventTypes: EVENT_TYPES,
+    categories: LOG_CATEGORIES,
   };
 }
 
@@ -392,16 +435,28 @@ export async function toggleEventLogging(client, guildId, eventTypes, enabled) {
   }
 }
 
-export async function setLogChannel(client, guildId, destination, channelId) {
-  if (!LOG_DESTINATIONS.includes(destination)) {
-    throw new Error(`Invalid log destination: ${destination}`);
+/**
+ * Set a log channel for a category (new) or destination (legacy)
+ * Supports both per-category channels and legacy destination channels
+ * @param {*} client - Discord client
+ * @param {string} guildId - Guild ID
+ * @param {string} categoryOrDest - Category name (e.g., 'security', 'bans') or legacy destination ('audit', 'applications', 'reports')
+ * @param {string|null} channelId - Channel ID or null to disable
+ */
+export async function setLogChannel(client, guildId, categoryOrDest, channelId) {
+  // Allow both new categories and legacy destinations
+  const isValidCategory = Object.keys(LOG_CATEGORIES).includes(categoryOrDest);
+  const isValidDestination = LOG_DESTINATIONS.includes(categoryOrDest);
+
+  if (!isValidCategory && !isValidDestination) {
+    throw new Error(`Invalid log category or destination: ${categoryOrDest}`);
   }
 
   try {
     const config = await getGuildConfig(client, guildId);
     const logging = {
       ...config.logging,
-      channels: { ...(config.logging?.channels || {}), [destination]: channelId },
+      channels: { ...(config.logging?.channels || {}), [categoryOrDest]: channelId },
     };
 
     if (channelId) {
@@ -467,4 +522,4 @@ export function resolveApplicationLogChannel(config, roleSettings = {}, appSetti
     || null;
 }
 
-export { EVENT_TYPES, EVENT_COLORS, EVENT_ICONS, LOG_DESTINATIONS };
+export { EVENT_TYPES, EVENT_COLORS, EVENT_ICONS, LOG_DESTINATIONS, LOG_CATEGORIES };
