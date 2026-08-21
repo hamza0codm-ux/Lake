@@ -23,13 +23,24 @@ export default {
                 .setDescription('Quick-set a log channel without opening the dashboard.')
                 .addStringOption((option) =>
                     option
-                        .setName('destination')
-                        .setDescription('Which log destination to configure.')
+                        .setName('category')
+                        .setDescription('Which log category to configure.')
                         .setRequired(true)
                         .addChoices(
-                            { name: 'Audit (moderation, messages, members…)', value: 'audit' },
-                            { name: 'Applications', value: 'applications' },
-                            { name: 'Reports', value: 'reports' },
+                            { name: '🔒 Security Logs', value: 'security' },
+                            { name: '😊 Reaction Logs', value: 'reactions' },
+                            { name: '👋 Member Join', value: 'member-join' },
+                            { name: '👋 Member Leave', value: 'member-leave' },
+                            { name: '🎁 Boost Logs', value: 'boosts' },
+                            { name: '🏷️ Nickname Logs', value: 'nicknames' },
+                            { name: '💬 Message Logs', value: 'messages' },
+                            { name: '🔘 Role Logs', value: 'roles' },
+                            { name: '🔒 Channel Logs', value: 'channels' },
+                            { name: '🔊 Voice Logs', value: 'voice' },
+                            { name: '📨 Invite Logs', value: 'invites' },
+                            { name: '⏳ Timeout Logs', value: 'timeouts' },
+                            { name: '👢 Kick Logs', value: 'kicks' },
+                            { name: '🔨 Ban Logs', value: 'bans' },
                         ),
                 )
                 .addChannelOption((option) =>
