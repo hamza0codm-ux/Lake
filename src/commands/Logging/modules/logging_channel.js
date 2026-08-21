@@ -5,10 +5,23 @@ import { InteractionHelper } from '../../../utils/interactionHelper.js';
 import { logger } from '../../../utils/logger.js';
 
 import { replyUserError, ErrorTypes } from '../../../utils/errorHandler.js';
-const DESTINATION_LABELS = {
-  audit: 'Audit Log',
-  applications: 'Applications',
-  reports: 'Reports',
+
+// All available log categories mapped to user-friendly labels
+const LOG_CATEGORIES = {
+  security: 'Security Logs',
+  reactions: 'Reaction Logs',
+  'member-join': 'Member Join',
+  'member-leave': 'Member Leave',
+  boosts: 'Boost Logs',
+  nicknames: 'Nickname Logs',
+  messages: 'Message Logs',
+  roles: 'Role Logs',
+  channels: 'Channel Logs',
+  voice: 'Voice Logs',
+  invites: 'Invite Logs',
+  timeouts: 'Timeout Logs',
+  kicks: 'Kick Logs',
+  bans: 'Ban Logs',
 };
 
 export default {
@@ -21,16 +34,16 @@ export default {
 
       await InteractionHelper.safeDefer(interaction, { ephemeral: true });
 
-      const destination = interaction.options.getString('destination');
+      const category = interaction.options.getString('category');
       const channel = interaction.options.getChannel('channel');
       const disable = interaction.options.getBoolean('disable') ?? false;
 
       if (disable) {
-        await setLogChannel(client, interaction.guildId, destination, null);
+        await setLogChannel(client, interaction.guildId, category, null);
         return InteractionHelper.safeEditReply(interaction, {
           embeds: [successEmbed(
             'Channel Cleared',
-            `The **${DESTINATION_LABELS[destination]}** channel has been removed.`,
+            `The **${LOG_CATEGORIES[category]}** channel has been removed.`,
           )],
         });
       }
@@ -44,12 +57,12 @@ export default {
         return await replyUserError(interaction, { type: ErrorTypes.PERMISSION, message: `I need **View Channel**, **Send Messages**, and **Embed Links** in ${channel}.` });
       }
 
-      await setLogChannel(client, interaction.guildId, destination, channel.id);
+      await setLogChannel(client, interaction.guildId, category, channel.id);
 
       return InteractionHelper.safeEditReply(interaction, {
         embeds: [successEmbed(
           'Channel Updated',
-          `**${DESTINATION_LABELS[destination]}** logs will be sent to ${channel}.\nUse \`/logging dashboard\` to toggle event categories.`,
+          `**${LOG_CATEGORIES[category]}** logs will be sent to ${channel}.\nUse \`/logging dashboard\` to toggle event categories.`,
         )],
       });
     } catch (error) {
@@ -58,3 +71,5 @@ export default {
     }
   },
 };
+
+export { LOG_CATEGORIES };
