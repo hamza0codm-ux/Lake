@@ -45,7 +45,6 @@ function withTraceContext(context = {}, traceContext = {}) {
     ...context
   };
 }
-
 export default {
   name: Events.InteractionCreate,
   async execute(interaction, client) {
@@ -168,7 +167,8 @@ export default {
               subtype: COMMAND_ERROR_SUBTYPES[interaction.commandName] || error?.context?.subtype,
             }, interactionTraceContext));
           }
-        } else if (interaction.isAutocomplete()) {
+        }
+        else if (interaction.isAutocomplete()) {
           const autocompleteCommand = client.commands.get(interaction.commandName);
           if (autocompleteCommand?.autocomplete) {
             try {
@@ -294,7 +294,7 @@ export default {
                   }
                 })
               );
-              
+
               const validChoices = choices.filter(c => c !== null);
               await interaction.respond(validChoices);
             } catch (error) {
@@ -306,7 +306,22 @@ export default {
               await interaction.respond([]);
             }
           }
-        } else if (interaction.isButton()) {
+        }
+        else if (interaction.isButton()) {
+          if (interaction.customId === 'ticket_priority_btn') {
+            try {
+              const { priorityTicketButtonHandler } = await import('../handlers/ticketButtons.js');
+              await priorityTicketButtonHandler.execute(interaction, client);
+            } catch (error) {
+              await handleInteractionError(interaction, error, withTraceContext({
+                type: 'button',
+                customId: interaction.customId,
+                handler: 'ticket_priority'
+              }, interactionTraceContext));
+            }
+            return;
+          }
+
           if (interaction.customId.startsWith('shared_todo_')) {
             const parts = interaction.customId.split('_');
             const buttonType = parts.slice(0, 3).join('_');
@@ -360,6 +375,20 @@ export default {
             }, interactionTraceContext));
           }
         } else if (interaction.isStringSelectMenu()) {
+          if (interaction.customId === 'ticket_priority_select') {
+            try {
+              const { priorityTicketSelectHandler } = await import('../handlers/ticketButtons.js');
+              await priorityTicketSelectHandler.execute(interaction, client);
+            } catch (error) {
+              await handleInteractionError(interaction, error, withTraceContext({
+                type: 'select_menu',
+                customId: interaction.customId,
+                handler: 'ticket_priority_select'
+              }, interactionTraceContext));
+            }
+            return;
+          }
+
           const [customId, ...args] = interaction.customId.split(':');
           const selectMenu = client.selectMenus.get(customId);
 
@@ -417,7 +446,6 @@ export default {
 
           if (!modal) {
             if (!interaction.customId.includes(':')) {
-
               return;
             }
 
