@@ -57,6 +57,11 @@ function buildTicketControlRow({ claimedBy = null } = {}) {
       .setStyle(claimedBy ? ButtonStyle.Secondary : ButtonStyle.Primary)
       .setEmoji('🙋')
       .setDisabled(!!claimedBy),
+        new ButtonBuilder()
+      .setCustomId('ticket_priority_btn')
+      .setLabel('Set Priority')
+      .setStyle(ButtonStyle.Secondary)
+      .setEmoji('🚨'),
     new ButtonBuilder()
       .setCustomId('ticket_pin')
       .setLabel('Pin')
